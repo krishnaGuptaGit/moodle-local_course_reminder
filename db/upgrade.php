@@ -57,5 +57,20 @@ function xmldb_local_course_reminder_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2026040601, 'local', 'course_reminder');
     }
 
+    if ($oldversion < 2026092101) {
+        // Add refdate to record which course end date a reminder was sent for.
+        // Expiry and overdue reminders are sent once per deadline rather than on a
+        // repeating cycle, so without this the reminder could never fire again when a
+        // course is reused with a new end date. Manager and student rows leave it null.
+        $table = new xmldb_table('local_course_reminder_log');
+        $field = new xmldb_field('refdate', XMLDB_TYPE_INTEGER, '10', null, null, null, null, 'timesent');
+
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        upgrade_plugin_savepoint(true, 2026092101, 'local', 'course_reminder');
+    }
+
     return true;
 }

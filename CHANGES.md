@@ -2,6 +2,64 @@
 
 All notable changes to the Course Escalation Reminder plugin will be documented in this file.
 
+## [1.6.0] - 2026-09-21
+
+### Added
+- **Course Expiry Reminder** — a new reminder that warns participants their course is about to
+  reach its end date. Applies only to courses that have an end date, and only to participants
+  who have not completed the course. The notice period is configurable (`expiry_days`, default
+  7 days before the end date). Disabled by default (`expiry_enable`).
+
+- **Course Overdue Reminder** — a new reminder for participants who still have not completed a
+  course once its end date has passed. Again restricted to courses that have an end date, and
+  skipped entirely for anyone who has completed. The delay is configurable (`overdue_days`,
+  default 7 days after the end date) and uses the same exclusion-based day counting as the rest
+  of the plugin, so the end date day itself is not counted. Disabled by default
+  (`overdue_enable`).
+
+  This closes a real gap: both existing reminders carry `AND (c.enddate = 0 OR c.enddate > now)`,
+  so before this release **no reminder of any kind was ever sent once a course had ended**.
+
+- **Reporting manager copied on overdue reminders** — the overdue email is addressed to the
+  participant with their reporting manager as a CC on the same message. The manager address is
+  read from the existing `reporting_manager_email` profile field. This happens **regardless of
+  the Enable Manager Escalation Reminders setting**, which remains a separate feature with its
+  own configuration and logic. If the manager address is missing or invalid the reminder is
+  still sent to the participant on their own; a bad address can never suppress it.
+
+  Moodle's `email_to_user()` has no CC parameter, and a hand-written `Cc:` header does not add
+  an SMTP envelope recipient, so this one email path assembles the message through
+  `get_mailer()` instead. The guards `email_to_user()` applies are repeated there — including
+  `$CFG->noemailever`, email diversion, suspended and `nologin` accounts, address validation and
+  the bounce threshold — so a copied send is no less safe than a normal one. If the send fails
+  for any reason it is retried once without the copy. Sites using a mailer plugin are
+  unaffected, because interception happens inside PHPMailer rather than in `email_to_user()`.
+
+- **`refdate` column on `local_course_reminder_log`** (nullable) — records which course end date
+  a reminder was sent for. Expiry and overdue reminders are sent once per deadline rather than
+  on a repeating cycle, so without this a course reused with a new end date would never remind
+  again. When an end date changes the reminder re-arms automatically and fires once for the new
+  deadline. Manager and student rows leave the column null; their behaviour is unchanged.
+
+### Changed
+- **Settings page reorganised** — settings are now grouped under a General Settings heading and
+  a new Course Expiry & Overdue Reminders heading, and every feature's fields are hidden while
+  that feature is switched off, using Moodle's core `hide_if()`. Presentation only: no setting
+  was renamed, moved between plugins, or given a new default, and the settings page URL is
+  unchanged.
+- **Processing Start Date now also bounds the new reminders**, applied to the *course end date*
+  rather than the enrolment date. This stops the overdue reminder sweeping in every course that
+  has ever ended the first time it is switched on. Its meaning for the existing manager and
+  student reminders is untouched.
+
+### Notes
+- The existing manager escalation and student reminder pipelines are **unchanged**. The only
+  edits to existing code are two new calls in `execute()` and an optional final parameter on
+  `upsert_log()` that defaults to the previous behaviour.
+- Courses without an end date are never considered by either new reminder.
+- Both new reminders honour the existing Excluded Course Categories setting, and both skip
+  courses that do not have completion tracking enabled, matching the existing pipelines.
+
 ## [1.5.2] - 2026-08-20
 
 ### Changed

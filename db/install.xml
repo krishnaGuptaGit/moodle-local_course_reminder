@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<XMLDB PATH="local/course_reminder/db" VERSION="20260406" COMMENT="XMLDB file for local_course_reminder"
+<XMLDB PATH="local/course_reminder/db" VERSION="20260921" COMMENT="XMLDB file for local_course_reminder"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:noNamespaceSchemaLocation="../../../lib/xmldb/xmldb.xsd"
 >
@@ -9,8 +9,9 @@
         <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
         <FIELD NAME="userid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="mdl_user.id"/>
         <FIELD NAME="courseid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="mdl_course.id"/>
-        <FIELD NAME="remindertype" TYPE="char" LENGTH="20" NOTNULL="true" SEQUENCE="false" COMMENT="manager or student"/>
+        <FIELD NAME="remindertype" TYPE="char" LENGTH="20" NOTNULL="true" SEQUENCE="false" COMMENT="manager, student, expiry or overdue"/>
         <FIELD NAME="timesent" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="Unix timestamp of last reminder sent"/>
+        <FIELD NAME="refdate" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="Course end date this reminder was sent for; null for manager and student reminders"/>
       </FIELDS>
       <KEYS>
         <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
