@@ -1,6 +1,6 @@
 # Course Escalation Reminder
 
-[![Moodle Plugin CI](https://github.com/YOUR_GITHUB_USERNAME/moodle-local_course_reminder/actions/workflows/ci.yml/badge.svg)](https://github.com/YOUR_GITHUB_USERNAME/moodle-local_course_reminder/actions/workflows/ci.yml)
+[![Moodle Plugin CI](https://github.com/krishnaGuptaGit/moodle-local_course_reminder/actions/workflows/ci.yml/badge.svg)](https://github.com/krishnaGuptaGit/moodle-local_course_reminder/actions/workflows/ci.yml)
 
 A Moodle local plugin that sends automated email reminders when enrolled courses are not completed. It has four independent reminder features:
 
