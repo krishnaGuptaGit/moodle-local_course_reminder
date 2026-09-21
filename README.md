@@ -2,10 +2,14 @@
 
 [![Moodle Plugin CI](https://github.com/YOUR_GITHUB_USERNAME/moodle-local_course_reminder/actions/workflows/ci.yml/badge.svg)](https://github.com/YOUR_GITHUB_USERNAME/moodle-local_course_reminder/actions/workflows/ci.yml)
 
-A Moodle local plugin that sends automated email reminders when enrolled courses are not completed within a configurable number of days. It has two independent reminder features:
+A Moodle local plugin that sends automated email reminders when enrolled courses are not completed. It has four independent reminder features:
 
 - **Manager Escalation** — notifies the employee's reporting manager about incomplete courses
 - **Student Reminder** — notifies the student directly when they have not completed a course (regardless of whether they have started it or not)
+- **Course Expiry Reminder** — warns the participant that a course is approaching its end date
+- **Course Overdue Reminder** — tells the participant a course end date has passed, copying their reporting manager
+
+The first two are driven by how long ago the learner enrolled. The last two are driven by the **course end date**, and apply only to courses that have one.
 
 ## Requirements
 
@@ -33,7 +37,7 @@ A Moodle local plugin that sends automated email reminders when enrolled courses
 | Setting | Description | Default |
 |---|---|---|
 | Enable Plugin | Master switch — disables all features when off | Off |
-| Processing Start Date | HTML5 date picker (range: 2 years back to 1 year forward). Only enrolments created/started on or after the selected date are processed. Leave blank to process all enrolments regardless of age. | Blank (disabled) |
+| Processing Start Date | HTML5 date picker (range: 2 years back to 1 year forward). For the Manager and Student reminders, only enrolments created/started on or after this date are processed. For the Expiry and Overdue reminders it instead bounds the **course end date**, so switching Overdue on does not sweep in every course that has ever ended. Leave blank to disable both guards. | Blank (disabled) |
 | Excluded Course Categories | Searchable multi-select dropdown listing all course categories. Type to filter, click to add; each selected category appears as a removable chip. Courses in selected categories — and all their sub-categories — are excluded from all reminders. Leave blank to exclude no categories. | None |
 
 ### Manager Escalation
@@ -71,6 +75,28 @@ A Moodle local plugin that sends automated email reminders when enrolled courses
 **Template variables — Consolidated:** `{username}`, `{courselist}`, `{days}`, `{sitename}`
 
 > **HTML in templates:** Body fields accept HTML. The default templates include a generic login link `<a href="#" target="_blank">LMS</a>` — replace `#` with your actual LMS URL before enabling the plugin. Plain-text email clients automatically receive a tag-stripped fallback.
+
+### Course Expiry & Overdue Reminders
+
+These two reminders are driven by the **course end date**, not by the enrolment date. A course with no end date is never included in either. Both are skipped for anyone who has already completed the course, and both respect Excluded Course Categories.
+
+| Setting | Description | Default |
+|---|---|---|
+| Enable Expiry Reminders | Turn the pre-deadline warning on or off | Off |
+| Days Before Expiry | How many days before the course end date to warn the participant. Example: set to 7 for a course ending 10 Oct → sent on 3 Oct. | 7 |
+| Enable Overdue Reminders | Turn the post-deadline notice on or off | Off |
+| Days After End Date | How many days after the course end date to send the overdue notice. The end date day itself is not counted. Example: set to 3 for a course that ended 1 Oct → sent on 4 Oct. | 7 |
+| Email Subject/Body | Customizable template for each reminder | See settings |
+
+**Template variables — Expiry:** `{coursename}`, `{username}`, `{enddate}`, `{days}`, `{daysremaining}`, `{sitename}`
+
+**Template variables — Overdue:** `{coursename}`, `{username}`, `{managername}`, `{enddate}`, `{days}`, `{daysoverdue}`, `{sitename}`
+
+> `{days}` = the configured threshold; `{daysremaining}` = actual days left before the end date; `{daysoverdue}` = actual days since the end date.
+
+**Each is sent once per deadline.** A participant receives one expiry warning and one overdue notice per course. If an administrator later changes the course end date, the reminder re-arms and fires once more for the new deadline.
+
+**Manager copy on overdue.** The overdue email goes to the participant with their reporting manager copied on the same message, taken from the `reporting_manager_email` profile field. This happens **whether or not Manager Escalation Reminders is enabled** — the two features are independent. If the manager address is missing or invalid the participant still receives the reminder on their own; a bad manager address never blocks the send. The expiry reminder and the student reminder do not copy anyone.
 
 ## Day Counting Rules (Exclusion-Based)
 
@@ -112,6 +138,20 @@ Both **Reminder Days** and **Cycle Days** use exclusion-based counting — the s
 5. After each send, records the timestamp in `local_course_reminder_log`.
 
 > **Duplicate prevention:** When a learner is enrolled in the same course via multiple enrolment methods, the course appears only once in consolidated emails.
+
+### Course Expiry Reminder
+
+1. Finds active enrolments on courses that **have an end date** falling within the configured notice period, excluding any courses in the configured excluded categories.
+2. Skips the course if completion tracking is not enabled, if the learner has already completed it, or if an expiry reminder has already been sent for that same end date.
+3. Sends one email per course to the participant. The manager is not copied.
+
+### Course Overdue Reminder
+
+1. Finds active enrolments on courses that **have an end date** which passed at least the configured number of days ago, excluding any courses in the configured excluded categories.
+2. Skips the course if completion tracking is not enabled, if the learner has already completed it, or if an overdue reminder has already been sent for that same end date.
+3. Sends one email per course to the participant, copying their reporting manager when an address is available.
+
+> Because enrolment durations are often tied to the course end date, the overdue reminder accepts enrolments that were valid **as at the course end date**, rather than requiring them to still be running today. Without this it would miss most of the learners it exists to chase.
 
 ## Performance / Scale
 

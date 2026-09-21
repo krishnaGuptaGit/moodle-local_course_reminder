@@ -60,6 +60,7 @@ class provider implements
                 'courseid'     => 'privacy:metadata:local_course_reminder_log:courseid',
                 'remindertype' => 'privacy:metadata:local_course_reminder_log:remindertype',
                 'timesent'     => 'privacy:metadata:local_course_reminder_log:timesent',
+                'refdate'      => 'privacy:metadata:local_course_reminder_log:refdate',
             ],
             'privacy:metadata:local_course_reminder_log'
         );

@@ -29,6 +29,12 @@ if ($hassiteconfig) {
 
     $ADMIN->add('localplugins', $settings);
 
+    $settings->add(new admin_setting_heading(
+        'local_course_reminder_generalsettings',
+        get_string('generalsettings', 'local_course_reminder'),
+        ''
+    ));
+
     // Global enable/disable — master switch for all features.
     $settings->add(new admin_setting_configcheckbox(
         'local_course_reminder/enable',
@@ -256,4 +262,130 @@ LMS Administration Team',
         $defaultstudentconsolidated,
         PARAM_RAW
     ));
+
+    $settings->add(new admin_setting_heading(
+        'local_course_reminder_expiryoverduesettings',
+        get_string('expiryoverduesettings', 'local_course_reminder'),
+        ''
+    ));
+
+    $settings->add(new admin_setting_configcheckbox(
+        'local_course_reminder/expiry_enable',
+        get_string('expiry_enable', 'local_course_reminder'),
+        get_string('expiry_enable_desc', 'local_course_reminder'),
+        0
+    ));
+
+    $settings->add(new admin_setting_configtext(
+        'local_course_reminder/expiry_days',
+        get_string('expiry_days', 'local_course_reminder'),
+        get_string('expiry_days_desc', 'local_course_reminder'),
+        7,
+        PARAM_INT
+    ));
+
+    $settings->add(new admin_setting_configtext(
+        'local_course_reminder/expiry_emailsubject',
+        get_string('expiry_emailsubject', 'local_course_reminder'),
+        get_string('expiry_emailsubject_desc', 'local_course_reminder'),
+        'Course Expiring Soon: {coursename}',
+        PARAM_TEXT
+    ));
+
+    $defaultexpirybody = 'Dear {username},' . "\n\n"
+        . 'The following course is due to expire on {enddate}:' . "\n\n"
+        . '{coursename}' . "\n\n"
+        . 'You have {daysremaining} day(s) left to complete it. Please log in to the'
+        . ' <a href="#" target="_blank">LMS</a> and complete the course before the deadline.' . "\n\n"
+        . 'If you have already completed the course, please ignore this message.' . "\n\n"
+        . 'For any access-related issues, you may contact the IT support team.' . "\n\n"
+        . 'Regards,' . "\n"
+        . 'LMS Administration Team';
+
+    $settings->add(new admin_setting_configtextarea(
+        'local_course_reminder/expiry_emailbody',
+        get_string('expiry_emailbody', 'local_course_reminder'),
+        get_string('expiry_emailbody_desc', 'local_course_reminder'),
+        $defaultexpirybody,
+        PARAM_RAW
+    ));
+
+    $settings->add(new admin_setting_configcheckbox(
+        'local_course_reminder/overdue_enable',
+        get_string('overdue_enable', 'local_course_reminder'),
+        get_string('overdue_enable_desc', 'local_course_reminder'),
+        0
+    ));
+
+    $settings->add(new admin_setting_configtext(
+        'local_course_reminder/overdue_days',
+        get_string('overdue_days', 'local_course_reminder'),
+        get_string('overdue_days_desc', 'local_course_reminder'),
+        7,
+        PARAM_INT
+    ));
+
+    $settings->add(new admin_setting_configtext(
+        'local_course_reminder/overdue_emailsubject',
+        get_string('overdue_emailsubject', 'local_course_reminder'),
+        get_string('overdue_emailsubject_desc', 'local_course_reminder'),
+        'Course Overdue: {coursename}',
+        PARAM_TEXT
+    ));
+
+    $defaultoverduebody = 'Dear {username},' . "\n\n"
+        . 'The following course passed its completion deadline on {enddate} and is now overdue:' . "\n\n"
+        . '{coursename}' . "\n\n"
+        . 'This course is {daysoverdue} day(s) overdue. Please log in to the'
+        . ' <a href="#" target="_blank">LMS</a> and complete it at the earliest.' . "\n\n"
+        . 'If you have already completed the course, please ignore this message.' . "\n\n"
+        . 'For any access-related issues, you may contact the IT support team.' . "\n\n"
+        . 'Regards,' . "\n"
+        . 'LMS Administration Team';
+
+    $settings->add(new admin_setting_configtextarea(
+        'local_course_reminder/overdue_emailbody',
+        get_string('overdue_emailbody', 'local_course_reminder'),
+        get_string('overdue_emailbody_desc', 'local_course_reminder'),
+        $defaultoverduebody,
+        PARAM_RAW
+    ));
+
+    // Hide each feature's fields while that feature is switched off. Presentation only —
+    // hide_if must run after every setting has been added so the dependency can attach.
+    //
+    // Manager Escalation is deliberately absent: its settings and email templates stay
+    // visible whether or not the feature is enabled, so they can be reviewed and prepared
+    // before it is switched on.
+    $hidewhenoff = [
+        'student_enable' => [
+            'student_days',
+            'student_cycledays',
+            'student_emailtype',
+            'student_emailsubjectindividual',
+            'student_emailbodyindividual',
+            'student_emailsubjectconsolidated',
+            'student_emailbodyconsolidated',
+        ],
+        'expiry_enable' => [
+            'expiry_days',
+            'expiry_emailsubject',
+            'expiry_emailbody',
+        ],
+        'overdue_enable' => [
+            'overdue_days',
+            'overdue_emailsubject',
+            'overdue_emailbody',
+        ],
+    ];
+
+    foreach ($hidewhenoff as $togglename => $dependentnames) {
+        foreach ($dependentnames as $dependentname) {
+            $settings->hide_if(
+                'local_course_reminder/' . $dependentname,
+                'local_course_reminder/' . $togglename,
+                'notchecked'
+            );
+        }
+    }
 }
