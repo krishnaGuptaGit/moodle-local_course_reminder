@@ -110,7 +110,7 @@ Both **Reminder Days** and **Cycle Days** use exclusion-based counting — the s
 
 ## How It Works
 
-1. A scheduled task runs daily at 17:00 server time.
+1. A scheduled task runs daily at 17:00 server time. To trigger it immediately instead of waiting — for testing, or right after enabling a feature — go to **Site administration > Server > Tasks > Scheduled tasks**, find "Send Course Escalation Reminder", and use **Run now**. This requires the site setting **Site administration > Security > Advanced features > "Allow 'Run now' for scheduled tasks"** to be on (default: on) and **Path to PHP CLI** to be configured under System Paths; if either is missing, trigger it from the command line instead: `php admin/cli/scheduled_task.php --execute='\local_course_reminder\task\send_reminder_task'`.
 2. If the global **Enable Plugin** setting is off, the task exits immediately.
 3. If **Processing Start Date** is set, enrolments created/started before that date are excluded at the SQL level.
 4. If **Excluded Course Categories** is set, courses in those categories (and all sub-categories) are excluded at the SQL level before any row is processed — they do not appear in skip counters.
